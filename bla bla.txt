@@ -1,0 +1,15 @@
+ <script>
+       var value = 0;
+     console.log($('#ex1SliderVal').text(value));
+      function valueIncrement() {
+          socket.send(value);  
+           if (value < 1000) {
+              socket.on('my response', function(msg){
+                    console.log(msg);
+                  value = msg.data;
+               })
+              
+            }
+       }
+        timtim = setInterval(valueIncrement, 5000);
+    </script>

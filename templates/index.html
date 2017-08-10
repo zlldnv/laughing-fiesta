@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>
+        Innopolis positioning
+    </title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <!--    map stylesheet-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css" integrity="sha512-wcw6ts8Anuw10Mzh9Ytw4pylW8+NAD4ch3lqm9lzAsTxg0GFeJgoAtxuCLREZSC5lUXdVyo/7yfsqFjQ4S+aKw==" crossorigin="" />
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="static/css/mycss.css">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!--    bootrap-slider stylesheet-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/9.8.1/css/bootstrap-slider.css" integrity="sha256-g/Yx9XZ2VfCMlHajAkDvUaloh0BijzCWNMAr7krsZwk=" crossorigin="anonymous" />
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <!--    map js-->
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js" integrity="sha512-A7vV8IFfih/D732iSSKi20u/ooOfj/AGehOKq0f4vLT1Zr2Y+RX7C+w8A1gaSasGtRUZpF/NZgzSAu4/Gc41Lg==" crossorigin="">
+    </script>
+    <!--    bootstrap-slider-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/9.8.1/bootstrap-slider.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+
+    <script type="text/javascript" charset="utf-8">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        socket.on('connect', function () {
+            socket.emit('my event', {
+                data: 'I\'m connected!'
+            });
+        });
+    </script>
+    <script type="text/javascript" src="static/js/moment.min.js"></script>
+</head>
+
+<body>
+    <nav class="navbar-inverse navbar-static-top">
+        <div class="container">
+            <p class="navbar-text navbar-left"><span class="glyphicon glyphicon-screenshot" aria-hidden="true"></span>InnoPositionig</p>
+        </div>
+    </nav>
+    <div id="italianmap" style="width: auto;height: 600px;"></div>
+    <br>
+    <br>
+    <div align="center">
+        <input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-step="1" data-slider-value="0" />
+    </div>
+    <span id="ex1CurrentSliderValLabel">Current time: <span id="ex1SliderVal"></span></span>
+    <br>
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-default" onclick="singleSPeed()">1X</button>
+        <button type="button" class="btn btn-default" onclick="doubleSPeed()">2X</button>
+        <button type="button" class="btn btn-default " onclick="qtrSPeed()">4X</button>
+    </div>
+    <nav class="navbar navbar-inverse navbar-fixed-bottom">
+        <div class="container">
+            <p class="navbar-text navbar-right">Made with bootstrap and leaflet</p>
+        </div>
+    </nav>
+    <script>
+        var currentValue;
+        var max;
+        var min;
+        var int1;
+        var int2;
+        var int4;
+        $('#ex1').slider({
+            formatter: function (value) {
+                currentValue = value;
+                return 'Selected time:' + (moment(value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a'));
+
+            }
+        })
+        $("#ex1").on("slideStart", function (slideEvt) {
+            clearInterval(int1)
+            clearInterval(int2)
+            clearInterval(int4)
+            socket.send(slideEvt.value);
+        })
+        $("#ex1").on("slide", function (slideEvt) {
+            $("#ex1SliderVal").text((moment(slideEvt.value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));
+            socket.send(slideEvt.value);
+        })
+        $("#ex1").on("slideStop", function (slideEvt) {
+            $("#ex1SliderVal").text((moment(slideEvt.value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));
+            socket.send(slideEvt.value);
+        })
+        socket.on('start', function (msg) {
+            min = msg.data;
+            $('#ex1').slider('setAttribute', 'min', min);
+            $('#ex1SliderVal').text((moment(min * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));
+            $("#ex1").slider('refresh');
+            console.log(min)
+
+        })
+        socket.on('finish', function (msg) {
+            max = msg.data;
+            $('#ex1').slider('setAttribute', 'max', max);
+            $("#ex1").slider('refresh');
+            console.log(max)
+        })
+        var mySlider = $("#ex1").slider();
+        function singleSPeed() {
+            clearInterval(int1)
+            clearInterval(int2)
+            clearInterval(int4)
+            value = currentValue;
+            int1 = setInterval("if (value <max){value++};mySlider.slider('setValue',value);$('#ex1SliderVal').text((moment(value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));socket.send(value);", 1000);
+        }
+        function doubleSPeed() {
+             clearInterval(int1)
+            clearInterval(int2)
+            clearInterval(int4)
+            value = currentValue;
+        int2 = setInterval("if (value <max){value++};mySlider.slider('setValue',value);$('#ex1SliderVal').text((moment(value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));socket.send(value);", 500);
+        }
+        function qtrSPeed() {
+             clearInterval(int1)
+            clearInterval(int2)
+            clearInterval(int4)
+            value = currentValue;
+            int4 = setInterval("if (value <max){value++};mySlider.slider('setValue',value);$('#ex1SliderVal').text((moment(value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));socket.send(value);", 250);
+        }
+    </script>
+    <script>
+        var coord = [46.71377, 11.65998];
+        var mkr = L.marker(coord);
+        var mymap = L.map('italianmap').setView([46.7139, 11.659], 14);
+        var popup = L.popup();
+
+        function updatePosition() {
+            "use strict";
+            socket.on('on x', function (msg) {
+                coord[0] = msg.data;
+            })
+            socket.on('on y', function (msg) {
+                coord[1] = msg.data;
+
+            })
+            mkr._latlng = coord;
+            mkr.update();
+        }
+        L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+            maxZoom: 18,
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+                '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            id: 'mapbox.streets'
+        }).addTo(mymap);
+        var tim = setInterval(updatePosition, 1);
+        mkr.addTo(mymap);
+        console.log(min)
+        console.log(max)
+    </script>
+    <script>
+    </script>
+</body>
+
+</html>
