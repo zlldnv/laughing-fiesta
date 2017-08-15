@@ -59,6 +59,16 @@
         <button type="button" class="btn btn-default" onclick="doubleSPeed()">2X</button>
         <button type="button" class="btn btn-default " onclick="qtrSPeed()">4X</button>
     </div>
+
+    <label class="btn btn-primary ">
+        <input type="checkbox" id="check1" autocomplete="off">Vitaly
+    </label>
+    <label class="btn btn-primary">
+        <input type="checkbox" autocomplete="off"> Anton
+    </label>
+    <label class="btn btn-primary">
+        <input type="checkbox" autocomplete="off"> Ayaz
+    </label>
     <nav class="navbar navbar-inverse navbar-fixed-bottom">
         <div class="container">
             <p class="navbar-text navbar-right">Made with bootstrap and leaflet</p>
@@ -97,6 +107,7 @@
             $('#ex1').slider('setAttribute', 'min', min);
             $('#ex1SliderVal').text((moment(min * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));
             $("#ex1").slider('refresh');
+            mymap.removeLayer(mkr);
             console.log(min)
 
         })
@@ -107,6 +118,7 @@
             console.log(max)
         })
         var mySlider = $("#ex1").slider();
+
         function singleSPeed() {
             clearInterval(int1)
             clearInterval(int2)
@@ -114,27 +126,37 @@
             value = currentValue;
             int1 = setInterval("if (value <max){value++};mySlider.slider('setValue',value);$('#ex1SliderVal').text((moment(value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));socket.send(value);", 1000);
         }
+
         function doubleSPeed() {
-             clearInterval(int1)
+            clearInterval(int1)
             clearInterval(int2)
             clearInterval(int4)
             value = currentValue;
-        int2 = setInterval("if (value <max){value++};mySlider.slider('setValue',value);$('#ex1SliderVal').text((moment(value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));socket.send(value);", 500);
+            int2 = setInterval("if (value <max){value++};mySlider.slider('setValue',value);$('#ex1SliderVal').text((moment(value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));socket.send(value);", 500);
         }
+
         function qtrSPeed() {
-             clearInterval(int1)
+            clearInterval(int1)
             clearInterval(int2)
             clearInterval(int4)
             value = currentValue;
             int4 = setInterval("if (value <max){value++};mySlider.slider('setValue',value);$('#ex1SliderVal').text((moment(value * 1000).utc().format('MMMM Do YYYY, h:mm:ss a')));socket.send(value);", 250);
         }
+        $('#check1').change(function () {
+            if (this.checked) {
+                mymap.addLayer(mkr);
+            }
+            else{
+                mymap.removeLayer(mkr);
+            }
+
+        });
     </script>
     <script>
         var coord = [46.71377, 11.65998];
         var mkr = L.marker(coord);
         var mymap = L.map('italianmap').setView([46.7139, 11.659], 14);
         var popup = L.popup();
-
         function updatePosition() {
             "use strict";
             socket.on('on x', function (msg) {
@@ -159,8 +181,8 @@
         console.log(min)
         console.log(max)
     </script>
-    <script>
-    </script>
+
+
 </body>
 
 </html>

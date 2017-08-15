@@ -1,7 +1,17 @@
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
+import time
+import psycopg2
 
+
+try:
+    conn = psycopg2.connect("dbname='Innopolispositioning' user='postgres' host='localhost'")
+    conn.autocommit = True
+except:
+    print "Cannot connect to db"
+
+cur = conn.cursor()
 oldDataSet = open('dataset.txt', 'r')
 temp = None
 data ={}
@@ -35,15 +45,31 @@ def index():
 
 @socketio.on('connect')
 def test_connect():
+    cur.execute(
+        "SELECT MIN(time) FROM anton_scema.users__postioning")
+    start__time = cur.fetchone()[0]
+    print start__time
+    cur.execute(
+        "SELECT MAX(time) FROM anton_scema.users__postioning")
+    finish__time = cur.fetchone()[0]
+    print finish__time
     print ("I am connected")
     socketio.emit('start', {'data': start__time})
     socketio.emit('finish', {'data': finish__time})
-
 @socketio.on('message')
 def handle_message(message):
-    socketio.emit('on x', {'data':data[message][1]})
-    socketio.emit('on y', {'data':data[message][0]})
+    cur.execute(
+        "SELECT x_position FROM anton_scema.users__postioning WHERE  users__postioning.time=%s AND users__postioning.username =%s", (message,'VITALY'))
+    x = cur.fetchone()[0]
+    cur.execute(
+        "SELECT y_position FROM anton_scema.users__postioning WHERE  users__postioning.time=%s AND users__postioning.username =%s", (message,'VITALY'))
+    y = cur.fetchone()[0]
+    socketio.emit('on x', {'data':y})
+    socketio.emit('on y', {'data':x})
     print('received message: ' + repr(message))
+    print x
+    print y
+
 
 if __name__ == '__main__':
     socketio.run(app)
